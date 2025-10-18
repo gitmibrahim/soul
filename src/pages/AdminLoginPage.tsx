@@ -1,14 +1,10 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-export const Route = createFileRoute('/admin/login')({
-  component: AdminLoginPage,
-})
-
-function AdminLoginPage() {
+export default function AdminLoginPage() {
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -17,13 +13,9 @@ function AdminLoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    // Default admin credentials
     if (username === 'admin' && password === 'admin123') {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('adminAuth', 'true')
-      }
-      navigate({ to: '/admin' })
+      localStorage.setItem('adminAuth', 'true')
+      navigate('/admin')
     } else {
       setError('اسم المستخدم أو كلمة المرور غير صحيحة')
     }
@@ -40,45 +32,18 @@ function AdminLoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">اسم المستخدم</label>
-              <Input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="أدخل اسم المستخدم"
-                required
-              />
+              <Input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="أدخل اسم المستخدم" required />
             </div>
-            
             <div className="space-y-2">
               <label className="text-sm font-medium">كلمة المرور</label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="أدخل كلمة المرور"
-                required
-              />
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="أدخل كلمة المرور" required />
             </div>
-
-            {error && (
-              <p className="text-sm text-destructive text-center">{error}</p>
-            )}
-
-            <Button type="submit" className="w-full">
-              تسجيل الدخول
-            </Button>
-            
+            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+            <Button type="submit" className="w-full">تسجيل الدخول</Button>
             <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => navigate({ to: '/' })}
-              >
-                العودة للرئيسية
-              </Button>
+              <Button type="button" variant="link" onClick={() => navigate('/')}>العودة للرئيسية</Button>
             </div>
           </form>
-          
           <div className="mt-6 p-4 bg-muted rounded-md text-sm text-muted-foreground">
             <p className="font-semibold mb-1">بيانات تسجيل الدخول الافتراضية:</p>
             <p>اسم المستخدم: admin</p>

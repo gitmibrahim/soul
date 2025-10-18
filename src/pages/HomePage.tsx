@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +22,6 @@ const mockProducts = [
     categoryId: '1',
     imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=غطاء+سيليكون',
     stock: 100,
-    createdAt: Date.now(),
   },
   {
     _id: 'p2',
@@ -32,7 +31,6 @@ const mockProducts = [
     categoryId: '2',
     imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=حماية+شاشة',
     stock: 150,
-    createdAt: Date.now(),
   },
   {
     _id: 'p3',
@@ -42,7 +40,6 @@ const mockProducts = [
     categoryId: '3',
     imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=شاحن+سريع',
     stock: 80,
-    createdAt: Date.now(),
   },
   {
     _id: 'p4',
@@ -52,7 +49,6 @@ const mockProducts = [
     categoryId: '4',
     imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=سماعات',
     stock: 50,
-    createdAt: Date.now(),
   },
   {
     _id: 'p5',
@@ -62,7 +58,6 @@ const mockProducts = [
     categoryId: '1',
     imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=غطاء+جلد',
     stock: 40,
-    createdAt: Date.now(),
   },
   {
     _id: 'p6',
@@ -72,35 +67,24 @@ const mockProducts = [
     categoryId: '2',
     imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=حماية+كاميرا',
     stock: 200,
-    createdAt: Date.now(),
   },
 ]
 
-export const Route = createFileRoute('/')({
-  component: HomePage,
-  validateSearch: (search: Record<string, unknown>) => {
-    return {
-      q: (search.q as string) || '',
-      category: (search.category as string) || '',
-    }
-  },
-})
-
-function HomePage() {
+export default function HomePage() {
   const navigate = useNavigate()
-  const { q, category } = Route.useSearch()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const q = searchParams.get('q') || ''
+  const category = searchParams.get('category') || ''
+  
   const [searchTerm, setSearchTerm] = useState(q)
-
-  // Get cart from localStorage
-  const getCartCount = () => {
-    if (typeof window === 'undefined') return 0
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-    return cart.reduce((sum: number, item: any) => sum + item.quantity, 0)
-  }
-
   const [cartCount, setCartCount] = useState(0)
 
-  // Filter products
+  useEffect(() => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]')
+    const count = cart.reduce((sum: number, item: any) => sum + item.quantity, 0)
+    setCartCount(count)
+  }, [])
+
   const filteredProducts = mockProducts.filter((product) => {
     const matchesSearch = !searchTerm || 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,20 +95,16 @@ function HomePage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    navigate({
-      search: (prev) => ({ ...prev, q: searchTerm }),
-    })
+    setSearchParams({ q: searchTerm, category })
   }
 
   const handleCategoryFilter = (categoryId: string) => {
-    navigate({
-      search: (prev) => ({ ...prev, category: categoryId === category ? '' : categoryId }),
-    })
+    const newCategory = categoryId === category ? '' : categoryId
+    setSearchParams({ q: searchTerm, category: newCategory })
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
@@ -137,7 +117,7 @@ function HomePage() {
               variant="ghost"
               size="icon"
               className="relative"
-              onClick={() => navigate({ to: '/cart' })}
+              onClick={() => navigate('/cart')}
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
@@ -146,7 +126,7 @@ function HomePage() {
                 </span>
               )}
             </Button>
-            <Button variant="outline" onClick={() => navigate({ to: '/admin' })}>
+            <Button variant="outline" onClick={() => navigate('/admin')}>
               لوحة التحكم
             </Button>
           </div>
@@ -154,7 +134,6 @@ function HomePage() {
       </header>
 
       <main className="container py-8">
-        {/* Search Bar */}
         <div className="mb-8">
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
@@ -171,7 +150,6 @@ function HomePage() {
           </form>
         </div>
 
-        {/* Category Filters */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-4">التصنيفات</h2>
           <div className="flex flex-wrap gap-2">
@@ -193,13 +171,12 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
             <Card key={product._id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div 
                 className="aspect-square bg-muted cursor-pointer"
-                onClick={() => navigate({ to: `/products/${product._id}` })}
+                onClick={() => navigate(`/products/${product._id}`)}
               >
                 <img
                   src={product.imageUrl}
@@ -224,7 +201,7 @@ function HomePage() {
               <CardFooter className="flex gap-2">
                 <Button 
                   className="flex-1"
-                  onClick={() => navigate({ to: `/products/${product._id}` })}
+                  onClick={() => navigate(`/products/${product._id}`)}
                 >
                   عرض التفاصيل
                 </Button>
