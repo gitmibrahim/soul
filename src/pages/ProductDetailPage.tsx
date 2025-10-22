@@ -131,7 +131,7 @@ export default function ProductDetailPage() {
             </div>
             {product.imageUrls && product.imageUrls.length > 1 && (
               <div className="flex gap-2 overflow-x-auto">
-                {product.imageUrls.map((url, index) => (
+                {product.imageUrls.map((url: string, index: number) => (
                   <button
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}

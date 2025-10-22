@@ -146,7 +146,7 @@ export const search = query({
     
     const searchLower = args.searchTerm.toLowerCase()
     const filteredProducts = allProducts.filter(
-      (p) =>
+      (p: any) =>
         p.name.toLowerCase().includes(searchLower) ||
         p.description.toLowerCase().includes(searchLower) ||
         p.productCode.toLowerCase().includes(searchLower)
