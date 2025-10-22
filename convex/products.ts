@@ -1,26 +1,123 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 
+// Generate automatic product code in format SO####
+async function generateProductCode(ctx: any): Promise<string> {
+  // Get all existing products to find the highest number
+  const allProducts = await ctx.db.query('products').collect()
+  
+  // Extract numbers from existing product codes
+  const existingNumbers = allProducts
+    .map((product: any) => {
+      const match = product.productCode?.match(/SO-(\d+)/)
+      return match ? parseInt(match[1]) : 0
+    })
+    .filter((num: number) => !isNaN(num))
+  
+  // Find the next available number
+  const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1
+  
+  // Format as SO-#### (4 digits with leading zeros)
+  return `SO-${nextNumber.toString().padStart(4, '0')}`
+}
+
 export const list = query({
   handler: async (ctx) => {
-    return await ctx.db.query('products').order('desc').collect()
+    const products = await ctx.db.query('products').order('desc').collect()
+    
+    // Convert storage IDs to URLs
+    return await Promise.all(
+      products.map(async (product) => {
+        const imageUrls = await Promise.all(
+          product.imageUrls.map(async (storageId) => {
+            // Check if it's already a URL
+            if (storageId.startsWith('http')) return storageId
+            // Convert storage ID to URL
+            try {
+              return await ctx.storage.getUrl(storageId as any) || storageId
+            } catch {
+              return storageId
+            }
+          })
+        )
+        return { ...product, imageUrls }
+      })
+    )
   },
 })
 
 export const getByCategory = query({
   args: { categoryId: v.id('categories') },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const products = await ctx.db
       .query('products')
       .withIndex('by_category', (q) => q.eq('categoryId', args.categoryId))
       .collect()
+    
+    // Convert storage IDs to URLs
+    return await Promise.all(
+      products.map(async (product) => {
+        const imageUrls = await Promise.all(
+          product.imageUrls.map(async (storageId) => {
+            if (storageId.startsWith('http')) return storageId
+            try {
+              return await ctx.storage.getUrl(storageId as any) || storageId
+            } catch {
+              return storageId
+            }
+          })
+        )
+        return { ...product, imageUrls }
+      })
+    )
   },
 })
 
 export const get = query({
   args: { id: v.id('products') },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id)
+    const product = await ctx.db.get(args.id)
+    if (!product) return null
+    
+    // Convert storage IDs to URLs
+    const imageUrls = await Promise.all(
+      product.imageUrls.map(async (storageId) => {
+        if (storageId.startsWith('http')) return storageId
+        try {
+          return await ctx.storage.getUrl(storageId as any) || storageId
+        } catch {
+          return storageId
+        }
+      })
+    )
+    
+    return { ...product, imageUrls }
+  },
+})
+
+export const getByProductCode = query({
+  args: { productCode: v.string() },
+  handler: async (ctx, args) => {
+    const product = await ctx.db
+      .query('products')
+      .withIndex('by_product_code', (q) => q.eq('productCode', args.productCode))
+      .first()
+    
+    if (!product) return null
+    
+    // Convert storage IDs to URLs
+    const imageUrls = await Promise.all(
+      product.imageUrls.map(async (storageId) => {
+        if (storageId.startsWith('http')) return storageId
+        try {
+          return await ctx.storage.getUrl(storageId as any) || storageId
+        } catch {
+          return storageId
+        }
+      })
+    )
+    
+    return { ...product, imageUrls }
   },
 })
 
@@ -28,13 +125,48 @@ export const search = query({
   args: { searchTerm: v.string() },
   handler: async (ctx, args) => {
     const allProducts = await ctx.db.query('products').collect()
-    if (!args.searchTerm) return allProducts
+    if (!args.searchTerm) {
+      // Convert storage IDs to URLs for all products
+      return await Promise.all(
+        allProducts.map(async (product) => {
+          const imageUrls = await Promise.all(
+            product.imageUrls.map(async (storageId) => {
+              if (storageId.startsWith('http')) return storageId
+              try {
+                return await ctx.storage.getUrl(storageId as any) || storageId
+              } catch {
+                return storageId
+              }
+            })
+          )
+          return { ...product, imageUrls }
+        })
+      )
+    }
     
     const searchLower = args.searchTerm.toLowerCase()
-    return allProducts.filter(
+    const filteredProducts = allProducts.filter(
       (p) =>
         p.name.toLowerCase().includes(searchLower) ||
-        p.description.toLowerCase().includes(searchLower)
+        p.description.toLowerCase().includes(searchLower) ||
+        p.productCode.toLowerCase().includes(searchLower)
+    )
+    
+    // Convert storage IDs to URLs for filtered products
+    return await Promise.all(
+      filteredProducts.map(async (product) => {
+        const imageUrls = await Promise.all(
+          product.imageUrls.map(async (storageId) => {
+            if (storageId.startsWith('http')) return storageId
+            try {
+              return await ctx.storage.getUrl(storageId as any) || storageId
+            } catch {
+              return storageId
+            }
+          })
+        )
+        return { ...product, imageUrls }
+      })
     )
   },
 })
@@ -45,12 +177,16 @@ export const create = mutation({
     description: v.string(),
     price: v.number(),
     categoryId: v.id('categories'),
-    imageUrl: v.optional(v.string()),
+    imageUrls: v.array(v.string()),
     stock: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    // Generate automatic product code
+    const productCode = await generateProductCode(ctx)
+    
     const productId = await ctx.db.insert('products', {
       ...args,
+      productCode,
       createdAt: Date.now(),
     })
     return productId
@@ -64,7 +200,7 @@ export const update = mutation({
     description: v.string(),
     price: v.number(),
     categoryId: v.id('categories'),
-    imageUrl: v.optional(v.string()),
+    imageUrls: v.array(v.string()),
     stock: v.optional(v.number()),
   },
   handler: async (ctx, args) => {

@@ -1,74 +1,15 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Search, ShoppingCart } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-
-// Mock data for development
-const mockCategories = [
-  { _id: '1', name: 'أغطية جوالات', description: 'جميع أنواع أغطية الجوال', createdAt: Date.now() },
-  { _id: '2', name: 'حماية شاشة', description: 'حماية الشاشة الزجاجية والعادية', createdAt: Date.now() },
-  { _id: '3', name: 'شواحن', description: 'شواحن سريعة وعادية', createdAt: Date.now() },
-  { _id: '4', name: 'سماعات', description: 'سماعات سلكية ولاسلكية', createdAt: Date.now() },
-]
-
-const mockProducts = [
-  {
-    _id: 'p1',
-    name: 'غطاء سيليكون شفاف',
-    description: 'غطاء سيليكون عالي الجودة شفاف لحماية الجوال',
-    price: 25,
-    categoryId: '1',
-    imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=غطاء+سيليكون',
-    stock: 100,
-  },
-  {
-    _id: 'p2',
-    name: 'حماية شاشة زجاجية',
-    description: 'حماية شاشة زجاجية مقاومة للكسر والخدش',
-    price: 35,
-    categoryId: '2',
-    imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=حماية+شاشة',
-    stock: 150,
-  },
-  {
-    _id: 'p3',
-    name: 'شاحن سريع 20 واط',
-    description: 'شاحن سريع بقوة 20 واط مع كيبل USB-C',
-    price: 45,
-    categoryId: '3',
-    imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=شاحن+سريع',
-    stock: 80,
-  },
-  {
-    _id: 'p4',
-    name: 'سماعات بلوتوث',
-    description: 'سماعات بلوتوث لاسلكية مع جودة صوت عالية',
-    price: 120,
-    categoryId: '4',
-    imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=سماعات',
-    stock: 50,
-  },
-  {
-    _id: 'p5',
-    name: 'غطاء جلد فاخر',
-    description: 'غطاء من الجلد الطبيعي الفاخر',
-    price: 85,
-    categoryId: '1',
-    imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=غطاء+جلد',
-    stock: 40,
-  },
-  {
-    _id: 'p6',
-    name: 'حماية كاميرا',
-    description: 'حماية زجاجية لعدسة الكاميرا',
-    price: 20,
-    categoryId: '2',
-    imageUrl: 'https://placehold.co/400x400/e2e8f0/475569?text=حماية+كاميرا',
-    stock: 200,
-  },
-]
+import { Search, ShoppingCart, Plus, Minus, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useQuery, useMutation, useAction } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { Id } from '../../convex/_generated/dataModel'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card'
+import { SOULLogo } from '../components/SOULLogo'
+import { ThemeToggle } from '../components/ThemeToggle'
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -77,21 +18,43 @@ export default function HomePage() {
   const category = searchParams.get('category') || ''
   
   const [searchTerm, setSearchTerm] = useState(q)
-  const [cartCount, setCartCount] = useState(0)
+  const [guestId] = useState(() => {
+    // Generate or retrieve session ID for guest cart
+    let guestId = localStorage.getItem('guestIdKey')
+    if (!guestId) {
+      guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      localStorage.setItem('guestIdKey', guestId)
+    }
+    return guestId
+  })
 
-  useEffect(() => {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-    const count = cart.reduce((sum: number, item: any) => sum + item.quantity, 0)
-    setCartCount(count)
-  }, [])
+  // Convex queries
+  const categories = useQuery(api.categories.list) || []
+  const products = useQuery(api.products.list)
+  const cart = useQuery(api.carts.getCart, { guestId }) || { items: [] }
+  const cartItemCount = useQuery(api.carts.getCartItemCount, { guestId }) || 0
 
-  const filteredProducts = mockProducts.filter((product) => {
+  // Convex mutations
+  const addToCart = useMutation(api.carts.addToCart)
+  const updateCartItem = useMutation(api.carts.updateCartItem)
+  const removeFromCart = useMutation(api.carts.removeFromCart)
+
+  // Check if products are loading
+  const isLoading = products === undefined
+
+  const filteredProducts = products ? products.filter((product) => {
     const matchesSearch = !searchTerm || 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = !category || product.categoryId === category
     return matchesSearch && matchesCategory
-  })
+  }) : []
+
+  // Get cart quantities for each product
+  const productCartQuantities = cart.items.reduce((acc: Record<string, number>, item: any) => {
+    acc[item.productId] = item.quantity
+    return acc
+  }, {})
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,16 +66,63 @@ export default function HomePage() {
     setSearchParams({ q: searchTerm, category: newCategory })
   }
 
+  const handleAddToCart = async (product: any) => {
+    try {
+      await addToCart({
+        guestId,
+        productId: product._id as Id<'products'>,
+        quantity: 1
+      })
+      toast.success(`تمت إضافة ${product.name} إلى السلة`, {
+        position: 'top-center',
+        richColors: true,
+        icon: '🛒',
+        duration: 3000,
+        style: {
+          backgroundColor: '#16a34a',
+          color: '#fff',
+          borderRadius: '10px',
+          padding: '10px',
+          fontSize: '16px',
+        },
+      })
+    } catch (error) {
+      toast.error('حدث خطأ أثناء إضافة المنتج للسلة')
+    }
+  }
+
+  const handleQuantityChange = async (product: any, delta: number) => {
+    try {
+      const currentQuantity = productCartQuantities[product._id] || 0
+      const newQuantity = currentQuantity + delta
+      
+      if (newQuantity <= 0) {
+        await removeFromCart({
+          guestId,
+          productId: product._id as Id<'products'>
+        })
+      } else {
+        await updateCartItem({
+          guestId,
+          productId: product._id as Id<'products'>,
+          quantity: newQuantity
+        })
+      }
+    } catch (error) {
+      toast.error('حدث خطأ أثناء تحديث الكمية')
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="w-4/5 mx-auto min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">خطّاب</h1>
-            <span className="text-sm text-muted-foreground">جملة إكسسوارات الجوال</span>
+            <SOULLogo size="md" />
           </div>
           
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon"
@@ -120,14 +130,11 @@ export default function HomePage() {
               onClick={() => navigate('/cart')}
             >
               <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
+              {cartItemCount > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
-                  {cartCount}
+                  {cartItemCount}
                 </span>
               )}
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/admin')}>
-              لوحة التحكم
             </Button>
           </div>
         </div>
@@ -159,7 +166,7 @@ export default function HomePage() {
             >
               الكل
             </Button>
-            {mockCategories.map((cat) => (
+            {categories.map((cat) => (
               <Button
                 key={cat._id}
                 variant={category === cat._id ? 'default' : 'outline'}
@@ -171,49 +178,89 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <Card key={product._id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div 
-                className="aspect-square bg-muted cursor-pointer"
-                onClick={() => navigate(`/products/${product._id}`)}
-              >
-                <img
-                  src={product.imageUrl}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <CardHeader>
-                <CardTitle className="text-lg">{product.name}</CardTitle>
-                <CardDescription className="line-clamp-2">
-                  {product.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold">{product.price} ر.س</span>
-                  <span className="text-sm text-muted-foreground">
-                    متوفر: {product.stock}
-                  </span>
-                </div>
-              </CardContent>
-              <CardFooter className="flex gap-2">
-                <Button 
-                  className="flex-1"
-                  onClick={() => navigate(`/products/${product._id}`)}
-                >
-                  عرض التفاصيل
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">لا توجد منتجات</p>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <Card key={product._id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div 
+                    className="aspect-square bg-muted cursor-pointer"
+                    onClick={() => navigate(`/products/${product._id}`)}
+                  >
+                    <img
+                      src={product.imageUrls?.[0] || 'https://placehold.co/400x400/e2e8f0/475569?text=منتج'}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      {product.name}
+                      <span className="text-sm font-normal text-muted-foreground mx-2">({product.productCode})</span>
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {product.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-bold text-right">{product.price} جنيه</span>
+                      <span className={`text-sm ${product.stock && product.stock <= 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {product.stock && product.stock <= 0 && 'غير متوفر'}
+                      </span>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex-col gap-2">
+                    {productCartQuantities[product._id] > 0 ? (
+                      <div className="flex items-center gap-2 w-full">
+                        <Button 
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleQuantityChange(product, -1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="flex-1 text-center font-semibold">
+                          {productCartQuantities[product._id]}
+                        </span>
+                        <Button 
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleQuantityChange(product, 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        className="w-full gap-2"
+                        onClick={() => handleAddToCart(product)}
+                        variant={product.stock && product.stock <= 0 ? 'outline' : 'default'}
+                      >
+                        <Plus className="h-4 w-4" />
+                        {product.stock && product.stock <= 0 ? 'أضف للاستعلام عبر واتساب' : 'إضافة للسلة'}
+                      </Button>
+                    )}
+                    {productCartQuantities[product._id] > 0 && productCartQuantities[product._id] > (product.stock || 0) && (
+                      <p className="text-xs text-amber-600 dark:text-amber-500 text-center w-full">
+                        سيتم التأكيد عبر واتساب
+                      </p>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">لا توجد منتجات</p>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

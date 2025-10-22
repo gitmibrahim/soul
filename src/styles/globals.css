@@ -67,6 +67,14 @@
     @apply bg-background text-foreground;
     font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
+  
+  html {
+    color-scheme: light;
+  }
+  
+  html.dark {
+    color-scheme: dark;
+  }
 }
 
 /* RTL Support */
