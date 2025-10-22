@@ -31,7 +31,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Convex
-_generated/
 .convex/
 
 # TypeScript
