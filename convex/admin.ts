@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 
-export const login = query({
+export const login = mutation({
   args: {
     username: v.string(),
     password: v.string(),
