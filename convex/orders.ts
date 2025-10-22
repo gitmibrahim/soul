@@ -3,11 +3,11 @@ import { mutation, query } from './_generated/server'
 
 export const list = query({
   args: { status: v.optional(v.string()) },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     if (args.status) {
       return await ctx.db
         .query('orders')
-        .withIndex('by_status', (q) => q.eq('status', args.status!))
+        .withIndex('by_status', (q: any) => q.eq('status', args.status!))
         .order('desc')
         .collect()
     }
@@ -17,17 +17,17 @@ export const list = query({
 
 export const get = query({
   args: { id: v.id('orders') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     return await ctx.db.get(args.id)
   },
 })
 
 export const getBySession = query({
   args: { guestId: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     return await ctx.db
       .query('orders')
-      .withIndex('by_session', (q) => q.eq('guestId', args.guestId))
+      .withIndex('by_session', (q: any) => q.eq('guestId', args.guestId))
       .order('desc')
       .collect()
   },
@@ -51,7 +51,7 @@ export const create = mutation({
       address: v.string(),
     })),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     // Create the order
     const orderId = await ctx.db.insert('orders', {
       ...args,
@@ -80,7 +80,7 @@ export const updateStatus = mutation({
     id: v.id('orders'),
     status: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     await ctx.db.patch(args.id, {
       status: args.status,
       updatedAt: Date.now(),
@@ -97,7 +97,7 @@ export const updateCustomerInfo = mutation({
       address: v.string(),
     }),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     await ctx.db.patch(args.id, {
       customerInfo: args.customerInfo,
       updatedAt: Date.now(),
@@ -107,7 +107,7 @@ export const updateCustomerInfo = mutation({
 
 export const cancel = mutation({
   args: { id: v.id('orders') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const order = await ctx.db.get(args.id)
     if (!order) return
 
@@ -135,7 +135,7 @@ export const updateItemQuantity = mutation({
     productId: v.id('products'),
     newQuantity: v.number(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const order = await ctx.db.get(args.orderId)
     if (!order) throw new Error('Order not found')
 
@@ -177,7 +177,7 @@ export const removeItem = mutation({
     orderId: v.id('orders'),
     productId: v.id('products'),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const order = await ctx.db.get(args.orderId)
     if (!order) throw new Error('Order not found')
 
@@ -220,7 +220,7 @@ export const confirmItem = mutation({
     orderId: v.id('orders'),
     productId: v.id('products'),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const order = await ctx.db.get(args.orderId)
     if (!order) throw new Error('Order not found')
 

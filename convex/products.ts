@@ -27,9 +27,9 @@ export const list = query({
     
     // Convert storage IDs to URLs
     return await Promise.all(
-      products.map(async (product) => {
+      products.map(async (product: any) => {
         const imageUrls = await Promise.all(
-          product.imageUrls.map(async (storageId) => {
+          product.imageUrls.map(async (storageId: any) => {
             // Check if it's already a URL
             if (storageId.startsWith('http')) return storageId
             // Convert storage ID to URL
@@ -48,17 +48,17 @@ export const list = query({
 
 export const getByCategory = query({
   args: { categoryId: v.id('categories') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const products = await ctx.db
       .query('products')
-      .withIndex('by_category', (q) => q.eq('categoryId', args.categoryId))
+      .withIndex('by_category', (q: any) => q.eq('categoryId', args.categoryId))
       .collect()
     
     // Convert storage IDs to URLs
     return await Promise.all(
-      products.map(async (product) => {
+      products.map(async (product: any) => {
         const imageUrls = await Promise.all(
-          product.imageUrls.map(async (storageId) => {
+          product.imageUrls.map(async (storageId: any) => {
             if (storageId.startsWith('http')) return storageId
             try {
               return await ctx.storage.getUrl(storageId as any) || storageId
@@ -75,13 +75,13 @@ export const getByCategory = query({
 
 export const get = query({
   args: { id: v.id('products') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const product = await ctx.db.get(args.id)
     if (!product) return null
     
     // Convert storage IDs to URLs
     const imageUrls = await Promise.all(
-      product.imageUrls.map(async (storageId) => {
+      product.imageUrls.map(async (storageId: any) => {
         if (storageId.startsWith('http')) return storageId
         try {
           return await ctx.storage.getUrl(storageId as any) || storageId
@@ -97,17 +97,17 @@ export const get = query({
 
 export const getByProductCode = query({
   args: { productCode: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const product = await ctx.db
       .query('products')
-      .withIndex('by_product_code', (q) => q.eq('productCode', args.productCode))
+      .withIndex('by_product_code', (q: any) => q.eq('productCode', args.productCode))
       .first()
     
     if (!product) return null
     
     // Convert storage IDs to URLs
     const imageUrls = await Promise.all(
-      product.imageUrls.map(async (storageId) => {
+      product.imageUrls.map(async (storageId: any) => {
         if (storageId.startsWith('http')) return storageId
         try {
           return await ctx.storage.getUrl(storageId as any) || storageId
@@ -123,14 +123,14 @@ export const getByProductCode = query({
 
 export const search = query({
   args: { searchTerm: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const allProducts = await ctx.db.query('products').collect()
     if (!args.searchTerm) {
       // Convert storage IDs to URLs for all products
       return await Promise.all(
-        allProducts.map(async (product) => {
+        allProducts.map(async (product: any) => {
           const imageUrls = await Promise.all(
-            product.imageUrls.map(async (storageId) => {
+            product.imageUrls.map(async (storageId: any) => {
               if (storageId.startsWith('http')) return storageId
               try {
                 return await ctx.storage.getUrl(storageId as any) || storageId
@@ -154,9 +154,9 @@ export const search = query({
     
     // Convert storage IDs to URLs for filtered products
     return await Promise.all(
-      filteredProducts.map(async (product) => {
+      filteredProducts.map(async (product: any) => {
         const imageUrls = await Promise.all(
-          product.imageUrls.map(async (storageId) => {
+          product.imageUrls.map(async (storageId: any) => {
             if (storageId.startsWith('http')) return storageId
             try {
               return await ctx.storage.getUrl(storageId as any) || storageId
@@ -180,7 +180,7 @@ export const create = mutation({
     imageUrls: v.array(v.string()),
     stock: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     // Generate automatic product code
     const productCode = await generateProductCode(ctx)
     
@@ -203,7 +203,7 @@ export const update = mutation({
     imageUrls: v.array(v.string()),
     stock: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const { id, ...updates } = args
     await ctx.db.patch(id, updates)
   },
@@ -211,7 +211,7 @@ export const update = mutation({
 
 export const remove = mutation({
   args: { id: v.id('products') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     await ctx.db.delete(args.id)
   },
 })

@@ -10,7 +10,7 @@ export const createDefaultAdmin = mutation({
     // Check if admin already exists
     const existingAdmin = await ctx.db
       .query('admin')
-      .withIndex('by_username', (q) => q.eq('username', 'admin'))
+      .withIndex('by_username', (q: any) => q.eq('username', 'admin'))
       .first()
     
     if (existingAdmin) {

@@ -78,7 +78,7 @@ export default function OrdersPage() {
   }
 
   const getProductStock = (productId: string) => {
-    const product = products.find(p => p._id === productId)
+    const product = products.find((p: any) => p._id === productId)
     return product?.stock || 0
   }
 

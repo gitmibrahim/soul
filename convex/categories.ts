@@ -9,7 +9,7 @@ export const list = query({
 
 export const get = query({
   args: { id: v.id('categories') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     return await ctx.db.get(args.id)
   },
 })
@@ -19,7 +19,7 @@ export const create = mutation({
     name: v.string(),
     description: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const categoryId = await ctx.db.insert('categories', {
       name: args.name,
       description: args.description,
@@ -35,7 +35,7 @@ export const update = mutation({
     name: v.string(),
     description: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const { id, ...updates } = args
     await ctx.db.patch(id, updates)
   },
@@ -43,7 +43,7 @@ export const update = mutation({
 
 export const remove = mutation({
   args: { id: v.id('categories') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     await ctx.db.delete(args.id)
   },
 })

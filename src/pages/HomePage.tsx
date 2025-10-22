@@ -42,7 +42,7 @@ export default function HomePage() {
   // Check if products are loading
   const isLoading = products === undefined
 
-  const filteredProducts = products ? products.filter((product) => {
+  const filteredProducts = products ? products.filter((product: any) => {
     const matchesSearch = !searchTerm || 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -166,7 +166,7 @@ export default function HomePage() {
             >
               الكل
             </Button>
-            {categories.map((cat) => (
+            {categories.map((cat: any) => (
               <Button
                 key={cat._id}
                 variant={category === cat._id ? 'default' : 'outline'}
@@ -185,7 +185,7 @@ export default function HomePage() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product: any) => (
                 <Card key={product._id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <div 
                     className="aspect-square bg-muted cursor-pointer"

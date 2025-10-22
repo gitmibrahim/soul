@@ -362,7 +362,7 @@ export default function ProductsPage() {
 
           {/* Products List */}
           <div className="grid gap-4">
-            {products.map((product) => {
+            {products.map((product: any) => {
               const category = categories.find(c => c._id === product.categoryId)
               return (
                 <Card key={product._id}>

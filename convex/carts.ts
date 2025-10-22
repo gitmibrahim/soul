@@ -22,7 +22,7 @@ async function calculateTotal(ctx: any, items: any[]) {
 
 export const getCart = query({
   args: { guestId: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     let cart = await getCartByGuestId(ctx, args.guestId)
     
     if (!cart) {
@@ -35,7 +35,7 @@ export const getCart = query({
 
 export const getCartWithProducts = query({
   args: { guestId: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     let cart = await getCartByGuestId(ctx, args.guestId)
     
     if (!cart) {
@@ -82,7 +82,7 @@ export const addToCart = mutation({
     productId: v.id('products'),
     quantity: v.number(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     let cart = await getCartByGuestId(ctx, args.guestId)
     
     if (!cart) {
@@ -143,7 +143,7 @@ export const updateCartItem = mutation({
     productId: v.id('products'),
     quantity: v.number(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const cart = await getCartByGuestId(ctx, args.guestId)
     
     if (!cart) {
@@ -173,7 +173,7 @@ export const removeFromCart = mutation({
     guestId: v.string(),
     productId: v.id('products'),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const cart = await getCartByGuestId(ctx, args.guestId)
     
     if (!cart) {
@@ -198,7 +198,7 @@ export const removeFromCart = mutation({
 
 export const clearCart = mutation({
   args: { guestId: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const cart = await getCartByGuestId(ctx, args.guestId)
     
     if (!cart) {
@@ -217,7 +217,7 @@ export const clearCart = mutation({
 
 export const getCartItemCount = query({
   args: { guestId: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const cart = await getCartByGuestId(ctx, args.guestId)
     
     if (!cart) {
@@ -238,7 +238,7 @@ export const placeOrder = mutation({
       address: v.string(),
     })),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const cart = await getCartByGuestId(ctx, args.guestId)
     
     if (!cart || cart.items.length === 0) {

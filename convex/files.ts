@@ -9,14 +9,14 @@ export const generateUploadUrl = mutation({
 
 export const getImageUrl = query({
   args: { storageId: v.id('_storage') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     return await ctx.storage.getUrl(args.storageId)
   },
 })
 
 export const deleteImage = mutation({
   args: { storageId: v.id('_storage') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     await ctx.storage.delete(args.storageId)
   },
 })
