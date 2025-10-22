@@ -19,30 +19,38 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="w-4/5 mx-auto min-h-screen bg-background">
+    <div className="w-full md:w-4/5 mx-auto min-h-screen bg-background">
       <header className="border-b bg-background">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container flex h-16 items-center justify-between px-4 md:px-8">
           <div className="flex items-center gap-2">
             <Link to="/">
               <SOULLogo size="md" />
             </Link>
-            <span className="text-sm text-muted-foreground">لوحة التحكم</span>
+            <span className="hidden sm:inline text-sm text-muted-foreground">لوحة التحكم</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <ThemeToggle />
-            <Button variant="ghost" onClick={() => navigate('/')}>الموقع الرئيسي</Button>
-            <Button variant="outline" onClick={handleLogout} className="gap-2">
-              <LogOut className="h-4 w-4" />تسجيل الخروج
+            <Button variant="ghost" onClick={() => navigate('/')} className="hidden sm:inline-flex">
+              الموقع الرئيسي
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleLogout} 
+              className="gap-2"
+              title="تسجيل الخروج"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">تسجيل الخروج</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container py-8">
+      <main className="container py-8 px-4 md:px-8">
         <div className="space-y-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2">مرحباً بك في لوحة التحكم</h1>
-            <p className="text-muted-foreground">إدارة متجرك بسهولة وأمان</p>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">مرحباً بك في لوحة التحكم</h1>
+            <p className="text-sm md:text-base text-muted-foreground">إدارة متجرك بسهولة وأمان</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
